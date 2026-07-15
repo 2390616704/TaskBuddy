@@ -30,6 +30,9 @@ data/
 # 设计讨论的临时视觉文件
 .superpowers/
 
+# 本地 Git 隔离工作区
+.worktrees/
+
 # 编辑器与系统文件
 .idea/
 .vscode/
