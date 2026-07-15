@@ -11,7 +11,12 @@ type Props = {
   onSelect(providerId: string): void;
 };
 
-export function ProviderPicker({ current, providers, disabled, onSelect }: Props) {
+export function ProviderPicker({
+  current,
+  providers,
+  disabled,
+  onSelect,
+}: Props) {
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
 

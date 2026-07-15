@@ -24,6 +24,24 @@
 
 实际结果：用户于 2026-07-15 报告测试完成，未报告与预期不符的现象。
 
+## 自动验证记录
+
+- 状态：Codex 已执行通过
+- 日期：2026-07-15
+
+实际结果：
+
+- `corepack pnpm format:check`：通过；Prettier 与 Ruff 格式检查无错误；
+- `corepack pnpm lint`：通过；ESLint 与 Ruff 无错误；
+- `corepack pnpm typecheck`：通过；mypy 检查 26 个 Python 源文件，TypeScript 无错误；
+- `corepack pnpm test`：通过；后端 24 项、前端 14 项测试通过；
+- `corepack pnpm build`：通过；Next.js 生产构建成功；
+- `corepack pnpm e2e`：通过；Playwright 5 项通过，1 项按桌面项目条件跳过；
+- `gitleaks git --no-banner --redact .`：通过；扫描 20 个提交，未发现泄漏；
+- `gitleaks dir --no-banner --redact .`：通过；排除可再生依赖、构建和测试报告后扫描完整工作目录，未发现泄漏。
+
+说明：Playwright 取消场景通过，但 Uvicorn 在主动取消 SQLite 流时仍输出连接终止警告；该警告未造成状态、持久化或测试失败，记录为已知日志整洁问题。
+
 ## Provider 按钮与 Markdown 流
 
 - 状态：用户报告通过

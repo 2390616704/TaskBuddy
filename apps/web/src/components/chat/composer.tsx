@@ -56,9 +56,7 @@ export function Composer({
         }}
       />
       <div className="composer-footer">
-        <span className="composer-hint">
-          {providerLabel} · 不执行真实操作
-        </span>
+        <span className="composer-hint">{providerLabel} · 不执行真实操作</span>
         {running ? (
           <button
             className="button button-danger"

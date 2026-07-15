@@ -34,9 +34,9 @@ class ProviderInfo:
 class ProviderRegistry:
     def __init__(self, settings: Settings, override: ModelProvider | None = None) -> None:
         mock = override or MockModelProvider()
-        self._providers: dict[str, ModelProvider] = {mock.name: mock}
+        self._providers: dict[str, ModelProvider] = {"mock": mock}
         self._metadata = {
-            mock.name: ProviderInfo(mock.name, "Mock", "deterministic", True),
+            "mock": ProviderInfo("mock", "Mock", "deterministic", True),
             "openai-compatible": ProviderInfo(
                 "openai-compatible",
                 settings.model_display_name,

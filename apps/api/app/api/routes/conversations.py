@@ -13,7 +13,7 @@ from app.application.conversations import (
     InvalidRetryError,
 )
 from app.application.runs import RunRegistry
-from app.domain.messages import Conversation, Message, MessageRole, MessageStatus
+from app.domain.messages import Conversation, Message, MessageStatus
 from app.repositories.conversations import ConversationRepository
 from app.providers.registry import ProviderNotFoundError, ProviderUnavailableError
 
@@ -61,10 +61,10 @@ def serialize_message(message: Message) -> dict[str, object]:
     }
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, response_model=None)
 async def create_conversation(
     payload: CreateConversationRequest, request: Request
-) -> dict[str, object]:
+) -> dict[str, object] | JSONResponse:
     try:
         request.app.state.provider_registry.require_available(payload.provider_id)
     except ProviderNotFoundError:
@@ -119,9 +119,7 @@ async def send_message(
                     raise ConversationNotFoundError(conversation_id)
                 service = ConversationService(
                     repository,
-                    request.app.state.provider_registry.require_available(
-                        conversation.provider_id
-                    ),
+                    request.app.state.provider_registry.require_available(conversation.provider_id),
                 )
                 async for name, data in service.stream_message(
                     conversation_id,
@@ -197,9 +195,7 @@ async def retry_message(
                     raise ConversationNotFoundError(conversation_id)
                 service = ConversationService(
                     repository,
-                    request.app.state.provider_registry.require_available(
-                        conversation.provider_id
-                    ),
+                    request.app.state.provider_registry.require_available(conversation.provider_id),
                 )
                 async for name, data in service.stream_retry(
                     conversation_id,

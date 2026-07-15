@@ -1,15 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
-
-
-class WorkAssistantResponse(BaseModel):
-    mode: Literal["answer", "clarification", "refusal"]
-    conclusion: str = ""
-    risks: list[str] = Field(default_factory=list)
-    open_questions: list[str] = Field(default_factory=list)
-    next_steps: list[str] = Field(default_factory=list)
-    notice: str = ""
+from pydantic import BaseModel
 
 
 class PromptMessage(BaseModel):

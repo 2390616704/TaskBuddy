@@ -11,14 +11,7 @@ const completedRiskMessage: Message = {
   conversationId: "c1",
   role: "assistant",
   status: "completed",
-  content: {
-    mode: "answer",
-    conclusion: "存在三个发布风险。",
-    risks: ["接口兼容性"],
-    open_questions: ["负责人是谁？"],
-    next_steps: ["确认回滚窗口"],
-    notice: "",
-  },
+  content: "## 结论\n\n存在三个发布风险。\n\n## 风险项\n\n- 接口兼容性",
   inReplyToMessageId: "u1",
   retryOfMessageId: null,
   errorCode: null,
@@ -27,7 +20,7 @@ const completedRiskMessage: Message = {
 };
 
 describe("MessageCard", () => {
-  it("renders structured fields instead of provider JSON", () => {
+  it("renders markdown instead of provider JSON", () => {
     render(<MessageCard message={completedRiskMessage} />);
 
     expect(screen.getByRole("heading", { name: "结论" })).toBeVisible();

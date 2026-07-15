@@ -56,10 +56,11 @@ class MockModelProvider:
             return
 
         encoded = choose_response(user_input)
+        delay = 0.05 if "[mock:slow]" in user_input else 0
         for sequence, chunk in enumerate(chunk_text(encoded, 24), start=1):
             if request.cancel.cancelled:
                 yield ModelEvent.cancelled()
                 return
             yield ModelEvent.delta_event(sequence, chunk)
-            await asyncio.sleep(0)
+            await asyncio.sleep(delay)
         yield ModelEvent.completed()

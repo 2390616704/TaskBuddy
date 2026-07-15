@@ -39,7 +39,7 @@ async def test_stream_emits_named_events_and_persists_completion(client: AsyncCl
     history = await client.get(f"/api/conversations/{conversation_id}/messages")
     assistant = history.json()[-1]
     assert assistant["status"] == "completed"
-    assert assistant["content"]["mode"] == "answer"
+    assert "风险项" in assistant["content"]
 
 
 async def test_provider_failure_is_persisted_and_streamed(client: AsyncClient) -> None:

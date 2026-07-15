@@ -28,14 +28,7 @@ describe("useConversationStream", () => {
         data: {
           messageId: "m1",
           status: "completed",
-          content: {
-            mode: "answer",
-            conclusion: "存在风险",
-            risks: [],
-            open_questions: [],
-            next_steps: ["确认"],
-            notice: "",
-          },
+          content: "## 结论\n\n存在风险\n\n## 下一步\n\n- 确认",
         },
       });
     });
@@ -44,7 +37,7 @@ describe("useConversationStream", () => {
     await act(() => result.current.send("c1", "分析风险"));
 
     expect(result.current.state.status).toBe("completed");
-    expect(result.current.state.content?.conclusion).toBe("存在风险");
+    expect(result.current.state.content).toContain("存在风险");
     expect(onSettled).toHaveBeenCalledWith("c1");
   });
 });

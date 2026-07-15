@@ -21,24 +21,17 @@ describe("reduceStreamEvent", () => {
     expect(reduceStreamEvent(first, delta(2, "险")).text).toBe("风险");
   });
 
-  it("records completed structured content as the terminal state", () => {
+  it("records completed markdown as the terminal state", () => {
     const state = reduceStreamEvent(initialStreamState, {
       name: "message.completed",
       data: {
         messageId: "m1",
         status: "completed",
-        content: {
-          mode: "answer",
-          conclusion: "存在风险",
-          risks: ["兼容性"],
-          open_questions: [],
-          next_steps: ["确认负责人"],
-          notice: "",
-        },
+        content: "## 结论\n\n存在风险",
       },
     });
 
     expect(state.status).toBe("completed");
-    expect(state.content?.next_steps).toEqual(["确认负责人"]);
+    expect(state.content).toContain("存在风险");
   });
 });
