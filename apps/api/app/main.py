@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.conversations import router as conversations_router
 from app.application.runs import RunRegistry
@@ -26,6 +27,12 @@ def create_app(
         await database.dispose()
 
     application = FastAPI(title="TaskBuddy API", lifespan=lifespan)
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type"],
+    )
     application.state.database = database
     application.state.provider = provider or build_provider(resolved_settings)
     application.state.run_registry = RunRegistry()
