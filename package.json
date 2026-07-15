@@ -1,0 +1,22 @@
+{
+  "name": "taskbuddy",
+  "private": true,
+  "packageManager": "pnpm@10.5.1",
+  "scripts": {
+    "build": "corepack pnpm --filter web build",
+    "dev": "concurrently --kill-others-on-fail --names api,web \"corepack pnpm dev:api\" \"corepack pnpm dev:web\"",
+    "dev:api": "\".venv\\Scripts\\python.exe\" -m uvicorn app.main:app --app-dir apps/api --host 127.0.0.1 --port 8000",
+    "dev:web": "corepack pnpm --filter web dev --hostname 127.0.0.1",
+    "e2e": "playwright test",
+    "pree2e": "node scripts/prepare-e2e.mjs",
+    "format:check": "corepack pnpm --filter web format:check && \".venv\\Scripts\\python.exe\" -m ruff format --check apps/api",
+    "lint": "corepack pnpm --filter web lint && \".venv\\Scripts\\python.exe\" -m ruff check apps/api",
+    "setup": "python -m venv .venv && .venv/Scripts/python -m pip install -e \"./apps/api[dev]\"",
+    "test": "\".venv\\Scripts\\python.exe\" -m pytest apps/api/tests -v && corepack pnpm --filter web test --run",
+    "typecheck": "\".venv\\Scripts\\python.exe\" -m mypy apps/api/app && corepack pnpm --filter web typecheck"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0",
+    "concurrently": "9.2.0"
+  }
+}
