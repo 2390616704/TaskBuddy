@@ -17,6 +17,7 @@ class ConversationRow(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     agent_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    provider_id: Mapped[str] = mapped_column(String(80), nullable=False, default="mock")
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

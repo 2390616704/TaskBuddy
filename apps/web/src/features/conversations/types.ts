@@ -1,18 +1,10 @@
 export type MessageStatus =
   "pending" | "streaming" | "completed" | "cancelled" | "failed";
 
-export type WorkAssistantResponse = {
-  mode: "answer" | "clarification" | "refusal";
-  conclusion: string;
-  risks: string[];
-  open_questions: string[];
-  next_steps: string[];
-  notice: string;
-};
-
 export type Conversation = {
   id: string;
   agentId: string;
+  providerId?: string;
   title: string;
   createdAt: string;
   updatedAt: string;
@@ -22,7 +14,7 @@ export type Message = {
   id: string;
   conversationId: string;
   role: "user" | "assistant";
-  content: string | WorkAssistantResponse;
+  content: string;
   status: MessageStatus;
   inReplyToMessageId: string | null;
   retryOfMessageId: string | null;
@@ -45,7 +37,7 @@ export type StreamEvent =
       data: {
         messageId: string;
         status: "completed";
-        content: WorkAssistantResponse;
+        content: string;
       };
     }
   | {

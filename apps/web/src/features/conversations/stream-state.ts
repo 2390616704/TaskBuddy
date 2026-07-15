@@ -1,8 +1,4 @@
-import type {
-  MessageStatus,
-  StreamEvent,
-  WorkAssistantResponse,
-} from "./types";
+import type { MessageStatus, StreamEvent } from "./types";
 
 export type StreamState = {
   requestId: string | null;
@@ -11,7 +7,7 @@ export type StreamState = {
   text: string;
   lastSequence: number;
   status: MessageStatus | "idle";
-  content: WorkAssistantResponse | null;
+  content: string | null;
   error: { code: string; message: string; retryable: boolean } | null;
 };
 

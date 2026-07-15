@@ -1,4 +1,3 @@
-import json
 from collections.abc import AsyncIterator
 from uuid import uuid4
 
@@ -16,6 +15,7 @@ from app.application.conversations import (
 from app.application.runs import RunRegistry
 from app.domain.messages import Conversation, Message, MessageRole, MessageStatus
 from app.repositories.conversations import ConversationRepository
+from app.providers.registry import ProviderNotFoundError, ProviderUnavailableError
 
 router = APIRouter(prefix="/api/conversations")
 
@@ -24,6 +24,7 @@ class CreateConversationRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     agent_id: str = Field(alias="agentId")
+    provider_id: str = Field(default="mock", alias="providerId")
 
 
 class SendMessageRequest(BaseModel):
@@ -38,6 +39,7 @@ def serialize_conversation(conversation: Conversation) -> dict[str, object]:
     return {
         "id": conversation.id,
         "agentId": conversation.agent_id,
+        "providerId": conversation.provider_id,
         "title": conversation.title,
         "createdAt": conversation.created_at.isoformat(),
         "updatedAt": conversation.updated_at.isoformat(),
@@ -45,14 +47,11 @@ def serialize_conversation(conversation: Conversation) -> dict[str, object]:
 
 
 def serialize_message(message: Message) -> dict[str, object]:
-    content: object = message.content
-    if message.role == MessageRole.ASSISTANT and message.status == MessageStatus.COMPLETED:
-        content = json.loads(message.content)
     return {
         "id": message.id,
         "conversationId": message.conversation_id,
         "role": message.role.value,
-        "content": content,
+        "content": message.content,
         "status": message.status.value,
         "inReplyToMessageId": message.in_reply_to_message_id,
         "retryOfMessageId": message.retry_of_message_id,
@@ -66,11 +65,18 @@ def serialize_message(message: Message) -> dict[str, object]:
 async def create_conversation(
     payload: CreateConversationRequest, request: Request
 ) -> dict[str, object]:
+    try:
+        request.app.state.provider_registry.require_available(payload.provider_id)
+    except ProviderNotFoundError:
+        return error_response(400, "PROVIDER_NOT_FOUND", "模型 Provider 不存在。")
+    except ProviderUnavailableError:
+        return error_response(409, "PROVIDER_UNAVAILABLE", "模型 Provider 尚未配置。")
     async with request.app.state.database.session() as session:
         conversation = await ConversationRepository(session).create_conversation(
             str(uuid4()),
             payload.agent_id,
             "新会话",
+            payload.provider_id,
         )
     return serialize_conversation(conversation)
 
@@ -107,9 +113,15 @@ async def send_message(
     async def stream() -> AsyncIterator[bytes]:
         try:
             async with request.app.state.database.session() as session:
+                repository = ConversationRepository(session)
+                conversation = await repository.get_conversation(conversation_id)
+                if conversation is None:
+                    raise ConversationNotFoundError(conversation_id)
                 service = ConversationService(
-                    ConversationRepository(session),
-                    request.app.state.provider,
+                    repository,
+                    request.app.state.provider_registry.require_available(
+                        conversation.provider_id
+                    ),
                 )
                 async for name, data in service.stream_message(
                     conversation_id,
@@ -179,9 +191,15 @@ async def retry_message(
     async def stream() -> AsyncIterator[bytes]:
         try:
             async with request.app.state.database.session() as session:
+                repository = ConversationRepository(session)
+                conversation = await repository.get_conversation(conversation_id)
+                if conversation is None:
+                    raise ConversationNotFoundError(conversation_id)
                 service = ConversationService(
-                    ConversationRepository(session),
-                    request.app.state.provider,
+                    repository,
+                    request.app.state.provider_registry.require_available(
+                        conversation.provider_id
+                    ),
                 )
                 async for name, data in service.stream_retry(
                     conversation_id,

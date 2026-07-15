@@ -1,9 +1,24 @@
+import type { ProviderInfo } from "@/features/providers/types";
+
+import { ProviderPicker } from "./provider-picker";
+
 type Props = {
   title: string;
+  currentProvider?: ProviderInfo;
+  providers: ProviderInfo[];
+  providerDisabled: boolean;
   onOpenSidebar(): void;
+  onSelectProvider(providerId: string): void;
 };
 
-export function AgentHeader({ title, onOpenSidebar }: Props) {
+export function AgentHeader({
+  title,
+  currentProvider,
+  providers,
+  providerDisabled,
+  onOpenSidebar,
+  onSelectProvider,
+}: Props) {
   return (
     <header className="agent-header">
       <button
@@ -21,9 +36,12 @@ export function AgentHeader({ title, onOpenSidebar }: Props) {
           梳理风险、澄清信息并给出下一步；不会执行真实操作。
         </p>
       </div>
-      <span className="mode-badge">
-        <span aria-hidden="true">●</span> Mock
-      </span>
+      <ProviderPicker
+        current={currentProvider}
+        providers={providers}
+        disabled={providerDisabled}
+        onSelect={onSelectProvider}
+      />
     </header>
   );
 }

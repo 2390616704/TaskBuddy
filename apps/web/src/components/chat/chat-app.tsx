@@ -10,6 +10,8 @@ import {
 } from "@/features/conversations/api";
 import type { Conversation, Message } from "@/features/conversations/types";
 import { useConversationStream } from "@/features/conversations/use-conversation-stream";
+import { listProviders } from "@/features/providers/api";
+import type { ProviderInfo } from "@/features/providers/types";
 
 import { AgentHeader } from "./agent-header";
 import { Composer } from "./composer";
@@ -25,6 +27,7 @@ export function ChatApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retrying, setRetrying] = useState(false);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
 
   const refreshMessages = useCallback(async (conversationId: string) => {
     setMessages(await listMessages(conversationId));
@@ -49,7 +52,11 @@ export function ChatApp() {
   useEffect(() => {
     void (async () => {
       try {
-        const loaded = await listConversations();
+        const [loaded, availableProviders] = await Promise.all([
+          listConversations(),
+          listProviders(),
+        ]);
+        setProviders(availableProviders);
         setConversations(loaded);
         if (loaded[0]) {
           setCurrentId(loaded[0].id);
@@ -75,10 +82,10 @@ export function ChatApp() {
     }
   };
 
-  const newConversation = async () => {
+  const newConversation = async (providerId = "mock") => {
     setError("");
     try {
-      const created = await createConversation();
+      const created = await createConversation(providerId);
       setConversations((current) => [created, ...current]);
       setCurrentId(created.id);
       setMessages([]);
@@ -152,6 +159,9 @@ export function ChatApp() {
   const current = conversations.find(
     (conversation) => conversation.id === currentId,
   );
+  const currentProvider = providers.find(
+    (provider) => provider.id === current?.providerId,
+  );
 
   return (
     <div className="app-shell">
@@ -173,7 +183,11 @@ export function ChatApp() {
       <main className="chat-panel">
         <AgentHeader
           title={current?.title ?? "工作事项助手"}
+          currentProvider={currentProvider}
+          providers={providers}
+          providerDisabled={loading || stream.isRunning || retrying}
           onOpenSidebar={() => setSidebarOpen(true)}
+          onSelectProvider={(providerId) => void newConversation(providerId)}
         />
         {error ? (
           <div className="error-banner" role="alert">
@@ -190,7 +204,7 @@ export function ChatApp() {
               ✦
             </span>
             <h2>开始第一段对话</h2>
-            <p>创建会话后，即可使用 Mock 模式验证完整流程。</p>
+            <p>创建会话后，即可验证完整对话流程。</p>
             <button
               className="button button-primary"
               type="button"
@@ -208,6 +222,7 @@ export function ChatApp() {
         <Composer
           disabled={!currentId || loading || retrying}
           running={stream.isRunning}
+          providerLabel={currentProvider?.displayName ?? "选择模型"}
           onSend={send}
           onCancel={stream.cancel}
         />

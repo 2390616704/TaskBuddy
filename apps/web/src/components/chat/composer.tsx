@@ -5,6 +5,7 @@ import { useState } from "react";
 type ComposerProps = {
   disabled: boolean;
   running: boolean;
+  providerLabel?: string;
   onSend(content: string): void | Promise<void>;
   onCancel(): void | Promise<void>;
 };
@@ -12,6 +13,7 @@ type ComposerProps = {
 export function Composer({
   disabled,
   running,
+  providerLabel = "Mock",
   onSend,
   onCancel,
 }: ComposerProps) {
@@ -54,7 +56,9 @@ export function Composer({
         }}
       />
       <div className="composer-footer">
-        <span className="composer-hint">Mock 模式 · 不执行真实操作</span>
+        <span className="composer-hint">
+          {providerLabel} · 不执行真实操作
+        </span>
         {running ? (
           <button
             className="button button-danger"

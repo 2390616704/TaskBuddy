@@ -25,6 +25,7 @@ TERMINAL_STATUSES = frozenset(
 class Conversation:
     id: str
     agent_id: str
+    provider_id: str
     title: str
     created_at: datetime
     updated_at: datetime

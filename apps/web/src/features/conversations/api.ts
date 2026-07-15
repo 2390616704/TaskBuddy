@@ -56,7 +56,7 @@ function toStreamEvent(raw: RawSseEvent): StreamEvent {
       if (
         hasString(data, "messageId") &&
         data.status === "completed" &&
-        isRecord(data.content)
+        hasString(data, "content")
       ) {
         return { name: raw.name, data } as StreamEvent;
       }
@@ -154,11 +154,11 @@ export function listConversations(): Promise<Conversation[]> {
   return requestJson("/api/conversations");
 }
 
-export function createConversation(): Promise<Conversation> {
+export function createConversation(providerId = "mock"): Promise<Conversation> {
   return requestJson("/api/conversations", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ agentId: "work-assistant" }),
+    body: JSON.stringify({ agentId: "work-assistant", providerId }),
   });
 }
 

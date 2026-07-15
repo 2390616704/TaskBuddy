@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.prompt.models import PromptMessage, PromptPackage, WorkAssistantResponse
+from app.prompt.models import PromptMessage, PromptPackage
 
 
 class PromptBuilder:
@@ -31,5 +31,5 @@ class PromptBuilder:
                 PromptMessage(role="user", content=user_input),
             ],
             prompt_version="work-assistant-v1",
-            output_schema=WorkAssistantResponse.model_json_schema(),
+            output_schema={},
         )

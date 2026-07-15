@@ -5,10 +5,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.conversations import router as conversations_router
+from app.api.routes.providers import router as providers_router
 from app.application.runs import RunRegistry
 from app.config import Settings
 from app.domain.provider import ModelProvider
-from app.providers.factory import build_provider
+from app.providers.registry import ProviderRegistry
 from app.repositories.database import Database
 
 
@@ -34,9 +35,10 @@ def create_app(
         allow_headers=["Content-Type"],
     )
     application.state.database = database
-    application.state.provider = provider or build_provider(resolved_settings)
+    application.state.provider_registry = ProviderRegistry(resolved_settings, provider)
     application.state.run_registry = RunRegistry()
     application.include_router(conversations_router)
+    application.include_router(providers_router)
 
     @application.get("/health")
     async def health() -> dict[str, str]:

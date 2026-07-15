@@ -4,7 +4,7 @@
 
 **Goal:** 实现按会话选择 Provider 的真实按钮、安全 Markdown、首条消息标题和基于语义的 Prompt 行为。
 
-**Architecture:** FastAPI 通过 Provider Registry 暴露公开元数据，并按会话持久化的 `providerId` 选择统一适配器；Next.js 在创建会话时选择 Provider，已有会话只显示不可变来源。消息内容继续使用结构化 Schema，字段内部交给安全 Markdown 组件渲染。
+**Architecture:** FastAPI 通过 Provider Registry 暴露公开元数据，并按会话持久化的 `providerId` 选择统一适配器；Next.js 在创建会话时选择 Provider，已有会话只显示不可变来源。模型流直接传输自由 Markdown，前端使用成熟组件渲染，不增加 JSON 信封或板块解析器。
 
 **Tech Stack:** Python 3.12、FastAPI、SQLAlchemy、SQLite、OpenAI Agents SDK、Next.js 15、React 19、TypeScript、react-markdown、remark-gfm。
 
@@ -140,7 +140,7 @@ feat: select and persist provider per conversation
 
 - [ ] **Step 3：在所有文本边界复用组件**
 
-用户纯文本、助手流式文本和结构化结果中的 `conclusion`、`risks`、`openQuestions`、`nextSteps`、`notice` 都使用 `MarkdownText`；结构化字段标题仍由 UI 控制。
+用户文本和助手流式文本都使用 `MarkdownText`；前端不解析或重建模型板块。
 
 - [ ] **Step 4：追加人工验收事项**
 
@@ -186,7 +186,6 @@ feat: derive conversation title from first message
 
 **Files:**
 - Modify: `apps/api/app/prompt/system.md`
-- Modify: `apps/api/app/prompt/validator.py`
 - Modify: `apps/api/app/providers/mock.py`
 - Modify: `docs/prompt-design.md`
 - Modify: `docs/manual-test-checklist.md`
@@ -195,9 +194,9 @@ feat: derive conversation title from first message
 
 写入风险梳理、信息不足先澄清、敏感信息窃取拒绝三类语义规则，并明确它们适用于近义表达、标点变化和改写。
 
-- [ ] **Step 2：放宽普通 answer 的无关字段要求**
+- [ ] **Step 2：移除 JSON Schema 运行时包装**
 
-普通 `answer` 只强制非空结论；风险场景由 Prompt/Mock 确保四类字段齐全。`clarification` 仍需要待确认项，`refusal` 仍需要安全说明。
+Provider 直接流式返回 Markdown；ConversationService 不执行 `json.loads()`，前端不接收结构化对象。风险场景是否包含四个板块由测试关键文本验证，失败时改进 Prompt。
 
 - [ ] **Step 3：实现确定性语义分类 Mock**
 

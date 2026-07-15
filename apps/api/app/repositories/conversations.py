@@ -17,8 +17,14 @@ class ConversationRepository:
         conversation_id: str,
         agent_id: str,
         title: str,
+        provider_id: str = "mock",
     ) -> Conversation:
-        row = ConversationRow(id=conversation_id, agent_id=agent_id, title=title)
+        row = ConversationRow(
+            id=conversation_id,
+            agent_id=agent_id,
+            provider_id=provider_id,
+            title=title,
+        )
         self._session.add(row)
         await self._session.commit()
         return self._to_conversation(row)
@@ -36,6 +42,10 @@ class ConversationRepository:
             select(ConversationRow.id).where(ConversationRow.id == conversation_id)
         )
         return conversation is not None
+
+    async def get_conversation(self, conversation_id: str) -> Conversation | None:
+        row = await self._session.get(ConversationRow, conversation_id)
+        return self._to_conversation(row) if row is not None else None
 
     async def create_exchange(
         self,
@@ -61,6 +71,13 @@ class ConversationRepository:
             return Exchange(self._to_message(existing_user), self._to_message(existing_assistant))
 
         now = datetime.now(UTC)
+        conversation = await self._session.get(ConversationRow, conversation_id)
+        if conversation is not None:
+            if conversation.title == "新会话":
+                normalized_title = " ".join(content.split())[:30]
+                if normalized_title:
+                    conversation.title = normalized_title
+            conversation.updated_at = now
         user = MessageRow(
             id=str(uuid4()),
             conversation_id=conversation_id,
@@ -196,6 +213,7 @@ class ConversationRepository:
         return Conversation(
             id=row.id,
             agent_id=row.agent_id,
+            provider_id=row.provider_id,
             title=row.title,
             created_at=row.created_at,
             updated_at=row.updated_at,

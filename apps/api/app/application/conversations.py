@@ -1,11 +1,9 @@
-import json
 from collections.abc import AsyncGenerator, AsyncIterator
 
 from app.domain.messages import Exchange, MessageRole, MessageStatus
 from app.domain.provider import CancelSignal, ModelProvider, ModelRequest
 from app.prompt.builder import PromptBuilder
 from app.prompt.models import PromptMessage
-from app.prompt.validator import InvalidModelOutput, OutputValidator
 from app.repositories.conversations import ConversationRepository
 
 
@@ -23,12 +21,10 @@ class ConversationService:
         repository: ConversationRepository,
         provider: ModelProvider,
         prompt_builder: PromptBuilder | None = None,
-        output_validator: OutputValidator | None = None,
     ) -> None:
         self._repository = repository
         self._provider = provider
         self._prompt_builder = prompt_builder or PromptBuilder()
-        self._output_validator = output_validator or OutputValidator()
 
     async def stream_message(
         self,
@@ -97,7 +93,7 @@ class ConversationService:
                 {
                     "messageId": exchange.assistant.id,
                     "status": "completed",
-                    "content": json.loads(exchange.assistant.content),
+                    "content": exchange.assistant.content,
                 },
             )
             return
@@ -128,14 +124,14 @@ class ConversationService:
             and message.role in {MessageRole.USER, MessageRole.ASSISTANT}
         ]
         prompt = self._prompt_builder.build(history, content)
-        encoded_output = ""
+        output = ""
 
         try:
             async for event in self._provider.stream(ModelRequest(prompt=prompt, cancel=cancel)):
                 if event.type == "delta" and event.delta is not None and event.sequence is not None:
                     if not await self._repository.append_delta(exchange.assistant.id, event.delta):
                         continue
-                    encoded_output += event.delta
+                    output += event.delta
                     yield (
                         "message.delta",
                         {
@@ -145,29 +141,13 @@ class ConversationService:
                         },
                     )
                 elif event.type == "completed":
-                    try:
-                        validated = self._output_validator.validate(encoded_output)
-                    except InvalidModelOutput:
-                        await self._repository.fail(exchange.assistant.id, "INVALID_MODEL_OUTPUT")
-                        yield self._error_event(
-                            exchange.assistant.id,
-                            "INVALID_MODEL_OUTPUT",
-                            "模型输出格式无效。",
-                            request_id,
-                            True,
-                        )
-                        return
-                    normalized = validated.model_dump(mode="json")
-                    await self._repository.complete(
-                        exchange.assistant.id,
-                        json.dumps(normalized, ensure_ascii=False, separators=(",", ":")),
-                    )
+                    await self._repository.complete(exchange.assistant.id, output)
                     yield (
                         "message.completed",
                         {
                             "messageId": exchange.assistant.id,
                             "status": "completed",
-                            "content": normalized,
+                            "content": output,
                         },
                     )
                     return
