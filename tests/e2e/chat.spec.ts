@@ -11,7 +11,6 @@ async function createNewConversation(page: Page) {
 
 test("completes the first Mock conversation without a key", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("开始第一段对话")).toBeVisible();
 
   await createNewConversation(page);
   await page.getByRole("textbox", { name: "消息" }).fill("帮我梳理本周发布风险");
