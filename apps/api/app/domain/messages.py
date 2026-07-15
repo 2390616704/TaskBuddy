@@ -22,6 +22,15 @@ TERMINAL_STATUSES = frozenset(
 
 
 @dataclass(frozen=True, slots=True)
+class Conversation:
+    id: str
+    agent_id: str
+    title: str
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class Message:
     id: str
     conversation_id: str
