@@ -24,6 +24,27 @@
 
 实际结果：待填写。
 
+## Studio 布局骨架移植验收
+
+- 状态：待执行
+- 参考实现：Spring AI Alibaba Studio `agent-chat-ui/src/components/thread/index.tsx`。
+
+### Composer 底部定位
+
+1. 分别打开空会话、短会话和长会话。
+2. 在长会话中将消息滚动到顶部、中部和底部。
+3. 调整浏览器窗口高度，并在 375px 移动视口下重复操作。
+
+预期结果：
+
+- Composer 始终贴住聊天主区域底部，不紧跟空状态或最后一条短消息；
+- 长会话滚动时 Composer 保持可见，不随消息或 `body` 滚动；
+- Agent Header 保持在主区域顶部；
+- 空会话提示在 Header 与 Composer 之间的剩余空间居中；
+- 消息区占据 Header 与 Composer 之间的全部剩余高度并独立滚动。
+
+实际结果：待填写。
+
 ### 移动端 375px
 
 1. 将浏览器视口宽度设置为 375px，打开长会话。
