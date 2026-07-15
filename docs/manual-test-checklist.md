@@ -42,6 +42,23 @@
 
 说明：Playwright 取消场景通过，但 Uvicorn 在主动取消 SQLite 流时仍输出连接终止警告；该警告未造成状态、持久化或测试失败，记录为已知日志整洁问题。
 
+## 干净克隆复现记录
+
+- 状态：Codex 已执行通过
+- 日期：2026-07-15
+- 目录：`D:\work\docs\TaskBuddy-clean-verify`
+- 来源：本地 Git 仓库的 `feature/implement-taskbuddy` 分支；未复制 `.env`、`.venv`、`node_modules`、数据库或构建产物。
+
+实际结果：
+
+- `corepack pnpm install --frozen-lockfile`：成功；
+- 按 README 新建 Python 3.12 虚拟环境并安装 `apps/api[dev,model]`：成功；
+- `corepack pnpm test`：后端 24 项、前端 14 项通过；
+- `corepack pnpm build`：Next.js 生产构建成功；
+- 未配置密钥运行 `corepack pnpm dev`：前后端均正常启动；
+- `GET /health`：HTTP 200；
+- `GET /`：HTTP 200，页面标题为 `TaskBuddy`。
+
 ## Provider 按钮与 Markdown 流
 
 - 状态：用户报告通过
