@@ -5,16 +5,19 @@ from fastapi import FastAPI
 
 from app.api.routes.conversations import router as conversations_router
 from app.application.runs import RunRegistry
+from app.config import Settings
 from app.domain.provider import ModelProvider
-from app.providers.mock import MockModelProvider
+from app.providers.factory import build_provider
 from app.repositories.database import Database
 
 
 def create_app(
-    database_url: str = "sqlite+aiosqlite:///./data/taskbuddy.db",
+    database_url: str | None = None,
     provider: ModelProvider | None = None,
+    settings: Settings | None = None,
 ) -> FastAPI:
-    database = Database(database_url)
+    resolved_settings = settings or Settings()
+    database = Database(database_url or resolved_settings.database_url)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -24,7 +27,7 @@ def create_app(
 
     application = FastAPI(title="TaskBuddy API", lifespan=lifespan)
     application.state.database = database
-    application.state.provider = provider or MockModelProvider()
+    application.state.provider = provider or build_provider(resolved_settings)
     application.state.run_registry = RunRegistry()
     application.include_router(conversations_router)
 
