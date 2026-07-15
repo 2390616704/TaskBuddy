@@ -12,7 +12,7 @@ export function createSseParser(): SseParser {
 
   return {
     push(chunk: string): RawSseEvent[] {
-      buffer += chunk.replaceAll("\r\n", "\n");
+      buffer = (buffer + chunk).replaceAll("\r\n", "\n");
       const parsed: RawSseEvent[] = [];
       let boundary = buffer.indexOf("\n\n");
 

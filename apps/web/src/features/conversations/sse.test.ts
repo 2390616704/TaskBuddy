@@ -26,4 +26,12 @@ describe("createSseParser", () => {
       ),
     ).toHaveLength(2);
   });
+
+  it("normalizes CRLF even when the pair is split across chunks", () => {
+    const parser = createSseParser();
+
+    expect(parser.push("event: heartbeat\r")).toEqual([]);
+    expect(parser.push("\ndata: {}\r")).toEqual([]);
+    expect(parser.push("\n\r\n")).toEqual([{ name: "heartbeat", data: {} }]);
+  });
 });

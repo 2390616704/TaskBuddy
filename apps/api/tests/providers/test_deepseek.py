@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+import asyncio
 
 import pytest
 from pydantic import SecretStr, ValidationError
@@ -13,6 +14,11 @@ from app.providers.factory import build_provider
 async def fake_stream(_: object, __: list[dict[str, str]]) -> AsyncIterator[str]:
     yield "第一段"
     yield "第二段"
+
+
+async def blocked_stream(_: object, __: list[dict[str, str]]) -> AsyncIterator[str]:
+    await asyncio.Event().wait()
+    yield "永远不会到达"
 
 
 def model_request() -> ModelRequest:
@@ -77,3 +83,22 @@ async def test_deepseek_maps_text_stream_to_internal_events() -> None:
     assert [event.type for event in events] == ["delta", "delta", "completed"]
     assert [event.sequence for event in events[:-1]] == [1, 2]
     assert [event.delta for event in events[:-1]] == ["第一段", "第二段"]
+
+
+async def test_deepseek_cancel_interrupts_a_stalled_upstream() -> None:
+    provider = OpenAIAgentsProvider(
+        Settings(
+            model_provider="deepseek",
+            deepseek_code_api_key=SecretStr("test-secret-value"),
+        ),
+        stream_factory=blocked_stream,
+    )
+    request = model_request()
+    stream = provider.stream(request)
+    pending = asyncio.create_task(anext(stream))
+
+    await asyncio.sleep(0)
+    request.cancel.cancel()
+    event = await asyncio.wait_for(pending, timeout=0.5)
+
+    assert event.type == "cancelled"

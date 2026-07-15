@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator, Callable
 from typing import cast
 
@@ -10,6 +11,11 @@ from app.config import Settings
 from app.domain.provider import ModelEvent, ModelRequest
 
 StreamFactory = Callable[[str, list[dict[str, str]]], AsyncIterator[str]]
+
+
+async def wait_for_cancel(request: ModelRequest) -> str:
+    await request.cancel.wait()
+    return "cancelled"
 
 
 class OpenAIAgentsProvider:
@@ -63,10 +69,25 @@ class OpenAIAgentsProvider:
         ]
         try:
             sequence = 0
-            async for delta in self._stream_factory(system_instructions, messages):
-                if request.cancel.cancelled:
+            iterator = self._stream_factory(system_instructions, messages).__aiter__()
+            while True:
+                next_delta: asyncio.Future[str] = asyncio.ensure_future(anext(iterator))
+                cancelled = asyncio.create_task(wait_for_cancel(request))
+                completed, _ = await asyncio.wait(
+                    {next_delta, cancelled},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if cancelled in completed:
+                    next_delta.cancel()
+                    await asyncio.gather(next_delta, return_exceptions=True)
                     yield ModelEvent.cancelled()
                     return
+                cancelled.cancel()
+                await asyncio.gather(cancelled, return_exceptions=True)
+                try:
+                    delta = next_delta.result()
+                except StopAsyncIteration:
+                    break
                 sequence += 1
                 yield ModelEvent.delta_event(sequence, delta)
             yield ModelEvent.completed()

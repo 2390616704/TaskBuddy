@@ -6,8 +6,13 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.application.runs import RunRegistry
+from app.application.conversations import ConversationService
+from app.domain.messages import MessageStatus
+from app.domain.provider import CancelSignal
 from app.domain.provider import ModelEvent, ModelRequest
 from app.main import create_app
+from app.repositories.conversations import ConversationRepository
+from app.repositories.database import Database
 
 from .test_streaming import create_conversation, parse_events
 
@@ -76,3 +81,25 @@ async def test_cancel_endpoint_stops_stream_and_persists_cancelled(tmp_path: Pat
         assert refreshed.json()[-1]["status"] == "cancelled"
 
     await app.state.database.dispose()
+
+
+async def test_closing_stream_marks_active_message_cancelled(tmp_path: Path) -> None:
+    database = Database(f"sqlite+aiosqlite:///{tmp_path / 'disconnect.db'}")
+    await database.create_schema()
+    async with database.session() as session:
+        repository = ConversationRepository(session)
+        await repository.create_conversation("c1", "work-assistant", "断连测试")
+        stream = ConversationService(repository, BlockingProvider()).stream_message(
+            "c1",
+            "等待断连",
+            "client-disconnect",
+            "request-disconnect",
+            CancelSignal(),
+        )
+        await anext(stream)
+        await anext(stream)
+        await stream.aclose()
+        messages = await repository.list_messages("c1")
+    await database.dispose()
+
+    assert messages[-1].status == MessageStatus.CANCELLED
