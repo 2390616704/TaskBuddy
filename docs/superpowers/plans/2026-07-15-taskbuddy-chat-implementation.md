@@ -35,8 +35,15 @@ docs/                                   Prompt、AI 协作和冗余审计
 - Create: `.env.example`
 - Create: `apps/web/package.json`
 - Create: `apps/web/tsconfig.json`
+- Create: `apps/web/next-env.d.ts`
+- Create: `apps/web/next.config.ts`
+- Create: `apps/web/src/app/layout.tsx`
+- Create: `apps/web/src/app/page.tsx`
+- Create: `apps/web/src/app/globals.css`
 - Create: `apps/api/pyproject.toml`
+- Create: `apps/api/app/__init__.py`
 - Create: `apps/api/app/main.py`
+- Create: `apps/api/tests/__init__.py`
 - Test: `apps/api/tests/test_health.py`
 
 - [ ] **Step 1：先写失败的健康检查测试**

@@ -1,0 +1,18 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  margin: 4rem auto;
+  max-width: 48rem;
+  padding: 0 1rem;
+}
